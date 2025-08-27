@@ -4,11 +4,6 @@ type: command
 # Specify the compute cluster to use for training
 compute: azureml:arisa-compute
 
-# Define the environment (Docker image and conda dependencies)
-environment:
-  image: "mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04:latest"
-  conda_file: ./conda-env.yml
-
 # The command to execute on the compute cluster
 command: >
   git clone https://github.com/KonradSdev/ARISA-Final-Project.git /mnt/data/cloned_repo &&

@@ -20,7 +20,7 @@ jobs:
 
       - name: Run Azure ML Job
         run: |
-          az ml job create --file azure-ml/job.yml
+          az ml job create --file azure-ml/job.yml --resource-group arisa --workspace-name arisa-ml
         working-directory: .
 
       - name: Download Model

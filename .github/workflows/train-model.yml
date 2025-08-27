@@ -1,0 +1,29 @@
+name: Train Model on Azure ML
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Run Azure ML Job
+        run: |
+          az ml job create --file azure-ml/job.yml
+        working-directory: .
+
+      - name: Download Model
+        run: |
+          latest_job_name=$(az ml job list --resource-group "arisa" --workspace-name "arisa-ml" --query "[0].name" -o tsv)
+          az ml job download --name $latest_job_name --resource-group "arisa" --workspace-name "arisa-ml" --download-all --output-path ./artifacts

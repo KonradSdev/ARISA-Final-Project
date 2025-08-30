@@ -55,7 +55,7 @@ jobs:
           rsync -avz --exclude '.git' -e "ssh -o StrictHostKeyChecking=no" . ec2-user@${{ env.PUBLIC_IP }}:/home/ec2-user/code/
           
           # Execute the python script and capture the output
-          ssh ec2-user@${{ env.PUBLIC_IP }} "cd /home/ec2-user/code/ && python3 your_script.py > script_output.txt"
+          ssh ec2-user@${{ env.PUBLIC_IP }} "cd /home/ec2-user/code/ && python3 ec2-test.py > script_output.txt"
           
           # Copy the output file back to the runner
           scp ec2-user@${{ env.PUBLIC_IP }}:/home/ec2-user/code/script_output.txt ./

@@ -1,0 +1,83 @@
+name: EC2 Automation Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance_id:
+        description: 'The EC2 instance ID to target.'
+        required: true
+        default: 'i-0f89b879f0cdfb01a' # Replace with your EC2 instance ID
+
+jobs:
+  run-script-on-ec2:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1 # Change to your AWS region
+
+      - name: Start EC2 Instance
+        id: start_ec2
+        run: |
+          aws ec2 start-instances --instance-ids ${{ github.event.inputs.instance_id }}
+          echo "Waiting for instance to be in 'running' state..."
+          aws ec2 wait instance-running --instance-ids ${{ github.event.inputs.instance_id }}
+          echo "EC2 instance is now running."
+
+      - name: Get Public IP of the Instance
+        id: get_ip
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ github.event.inputs.instance_id }} \
+            --query "Reservations[0].Instances[0].PublicIpAddress" \
+            --output text)
+          echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+          echo "Public IP is $PUBLIC_IP"
+      
+      - name: Wait for SSH to be available
+        run: |
+          for i in {1..30}; do
+            if ssh -o StrictHostKeyChecking=no -i /path/to/your/ssh/key ec2-user@${{ env.PUBLIC_IP }} "exit 0"; then
+              echo "SSH is available!"
+              break
+            else
+              echo "SSH is not yet available, retrying in 10 seconds..."
+              sleep 10
+            fi
+            if [ $i -eq 30 ]; then
+              echo "Timed out waiting for SSH."
+              exit 1
+            fi
+          done
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          
+      - name: Checkout repository code
+        uses: actions/checkout@v4
+      
+      - name: Transfer code and execute script
+        run: |
+          # Use rsync over SSH to transfer the code
+          rsync -avz --exclude '.git' -e "ssh -o StrictHostKeyChecking=no -i /path/to/your/ssh/key" . ec2-user@${{ env.PUBLIC_IP }}:/home/ec2-user/code/
+          
+          # Execute the python script and capture the output
+          ssh -o StrictHostKeyChecking=no -i /path/to/your/ssh/key ec2-user@${{ env.PUBLIC_IP }} "cd /home/ec2-user/code/ && python3 ec2-test.py.py > script_output.txt"
+          
+          # Copy the output file back to the runner
+          scp -o StrictHostKeyChecking=no -i /path/to/your/ssh/key ec2-user@${{ env.PUBLIC_IP }}:/home/ec2-user/code/script_output.txt ./
+          
+      - name: Display script output
+        run: cat script_output.txt
+
+      - name: Stop EC2 Instance
+        if: always()
+        run: |
+          aws ec2 stop-instances --instance-ids ${{ github.event.inputs.instance_id }}
+          echo "EC2 instance is now stopping."

@@ -46,7 +46,6 @@ jobs:
       
       - name: Transfer code and execute script
         run: |
-          echo ${{ secrets.SSH_PRIVATE_KEY }} > private_key && chmod 600 private_key
           rsync -avz --exclude '.git' -e "ssh -o StrictHostKeyChecking=no" -i private_key . ec2-user@${{ env.PUBLIC_IP }}:/home/ec2-user/code/
           # Execute the python script and capture the output
           ssh ec2-user@${{ env.PUBLIC_IP }} "cd /home/ec2-user/code/ && python3 your_script.py > script_output.txt"

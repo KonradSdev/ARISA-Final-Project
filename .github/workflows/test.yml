@@ -1,0 +1,22 @@
+name: EC2 Automation Workflow
+
+on:
+  workflow_dispatch:
+    inputs:
+      instance_id:
+        description: 'The EC2 instance ID to target.'
+        required: true
+        default: 'i-0f89b879f0cdfb01a' # Replace with your EC2 instance ID
+
+jobs:
+  run-script-on-ec2:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:    
+      - name: Transfer code and execute script
+        run: |
+          ssh ec2-user@$3.73.41.62
+          cat test.txt

@@ -18,5 +18,5 @@ jobs:
     steps:    
       - name: Transfer code and execute script
         run: |
-          ssh ec2-user@$3.73.41.62
+          ssh ec2-user@ec2-3-73-41-62.eu-central-1.compute.amazonaws.com
           cat test.txt

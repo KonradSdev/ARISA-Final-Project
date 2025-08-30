@@ -46,9 +46,6 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Add EC2 Host to Known Hosts
-        run: ssh-keyscan ${{ env.PUBLIC_IP }} >> ~/.ssh/known_hosts
-
       - name: Checkout repository code
         uses: actions/checkout@v4
       
